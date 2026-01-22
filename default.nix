@@ -4,7 +4,7 @@
   Self-contained Rust tooling using rust-overlay.
   Uses rust-toolchain.toml if present, otherwise defaults to pinned nightly.
   Consumes buildDeps from other bundles for package builds.
-  Formatter fragments merge with other formatter.d/ or __outputs.formatter contributions.
+  Formatter config imported from ./formatter.nix.
 */
 {
   __inputs = {
@@ -37,24 +37,6 @@
         cargo = rustToolchain;
         rustc = rustToolchain;
       };
-
-      /**
-        Wrapper for cargo-sort to work with treefmt.
-        treefmt passes file paths, but cargo-sort operates on directories.
-      */
-      cargoSortWrapper = pkgs.writeShellScriptBin "cargo-sort-wrapper" ''
-        set -euo pipefail
-        opts=(); files=()
-        while [[ $# -gt 0 ]]; do
-          case "$1" in
-            --*) opts+=("$1"); shift ;;
-            *) files+=("$1"); shift ;;
-          esac
-        done
-        for f in "''${files[@]}"; do
-          ${pkgs.lib.getExe pkgs.cargo-sort} "''${opts[@]}" "$(dirname "$f")"
-        done
-      '';
 
       # Collect build dependencies from all bundles
       allBuildInputs = lib.concatMap (d: d.buildInputs or [ ]) (builtins.attrValues buildDeps);
@@ -100,17 +82,7 @@
         Merges with other formatter.d/ or __outputs.formatter sources.
       */
       __outputs.perSystem.formatter = {
-        value = {
-          programs.rustfmt.enable = true;
-          settings.formatter.cargo-sort = {
-            command = "${cargoSortWrapper}/bin/cargo-sort-wrapper";
-            options = [ "--workspace" ];
-            includes = [
-              "Cargo.toml"
-              "**/Cargo.toml"
-            ];
-          };
-        };
+        value = import ./formatter.nix { inherit pkgs; };
         strategy = "merge";
       };
     };
