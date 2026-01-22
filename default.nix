@@ -4,6 +4,7 @@
   Self-contained Rust tooling using rust-overlay.
   Uses rust-toolchain.toml if present, otherwise defaults to pinned nightly.
   Consumes buildDeps from other bundles for package builds.
+  Auto-detects linker dependencies from .cargo/config.toml (clang, mold, lld).
   Formatter config imported from ./formatter.nix.
 */
 {
@@ -38,9 +39,16 @@
         rustc = rustToolchain;
       };
 
-      # Collect build dependencies from all bundles
-      allBuildInputs = lib.concatMap (d: d.buildInputs or [ ]) (builtins.attrValues buildDeps);
-      allNativeBuildInputs = lib.concatMap (d: d.nativeBuildInputs or [ ]) (builtins.attrValues buildDeps);
+      # Detect dependencies from .cargo/config.toml
+      cargoConfigDeps = import ./cargo-config.nix { inherit pkgs rootSrc; };
+
+      # Collect build dependencies from all bundles + cargo config
+      allBuildInputs =
+        cargoConfigDeps.buildInputs
+        ++ lib.concatMap (d: d.buildInputs or [ ]) (builtins.attrValues buildDeps);
+      allNativeBuildInputs =
+        cargoConfigDeps.nativeBuildInputs
+        ++ lib.concatMap (d: d.nativeBuildInputs or [ ]) (builtins.attrValues buildDeps);
       allCargoOutputHashes = lib.foldl' (acc: d: acc // (d.cargoOutputHashes or { })) { } (builtins.attrValues buildDeps);
     in
     let
@@ -67,6 +75,7 @@
 
       /**
         Rust development shell with toolchain and common tools.
+        Includes linkers detected from .cargo/config.toml.
       */
       __outputs.perSystem.devShells.rust = pkgs.mkShell {
         packages = [
@@ -74,7 +83,7 @@
           pkgs.rust-analyzer
           pkgs.cargo-watch
           pkgs.cargo-edit
-        ];
+        ] ++ cargoConfigDeps.nativeBuildInputs;
       };
 
       /**
