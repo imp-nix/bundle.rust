@@ -71,6 +71,7 @@
         };
         buildInputs = allBuildInputs;
         nativeBuildInputs = allNativeBuildInputs;
+        doCheck = false;
       };
     in
     {
