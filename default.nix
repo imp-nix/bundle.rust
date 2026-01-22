@@ -3,6 +3,7 @@
 
   Self-contained Rust tooling using rust-overlay.
   Uses rust-toolchain.toml if present, otherwise defaults to pinned nightly.
+  Consumes buildDeps from other bundles for package builds.
   Formatter fragments merge with other formatter.d/ or __outputs.formatter contributions.
 */
 {
@@ -15,8 +16,10 @@
     _:
     {
       pkgs,
+      lib ? pkgs.lib,
       inputs,
       rootSrc,
+      buildDeps ? { },
       ...
     }:
     let
@@ -52,12 +55,18 @@
           ${pkgs.lib.getExe pkgs.cargo-sort} "''${opts[@]}" "$(dirname "$f")"
         done
       '';
+
+      # Collect build dependencies from all bundles
+      allBuildInputs = lib.concatMap (d: d.buildInputs or [ ]) (builtins.attrValues buildDeps);
+      allNativeBuildInputs = lib.concatMap (d: d.nativeBuildInputs or [ ]) (builtins.attrValues buildDeps);
     in
     let
       package = rustPlatform.buildRustPackage {
         inherit pname version;
         src = rootSrc;
         cargoLock.lockFile = rootSrc + "/Cargo.lock";
+        buildInputs = allBuildInputs;
+        nativeBuildInputs = allNativeBuildInputs;
       };
     in
     {
