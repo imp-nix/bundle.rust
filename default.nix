@@ -59,12 +59,16 @@
       # Collect build dependencies from all bundles
       allBuildInputs = lib.concatMap (d: d.buildInputs or [ ]) (builtins.attrValues buildDeps);
       allNativeBuildInputs = lib.concatMap (d: d.nativeBuildInputs or [ ]) (builtins.attrValues buildDeps);
+      allCargoOutputHashes = lib.foldl' (acc: d: acc // (d.cargoOutputHashes or { })) { } (builtins.attrValues buildDeps);
     in
     let
       package = rustPlatform.buildRustPackage {
         inherit pname version;
         src = rootSrc;
-        cargoLock.lockFile = rootSrc + "/Cargo.lock";
+        cargoLock = {
+          lockFile = rootSrc + "/Cargo.lock";
+          outputHashes = allCargoOutputHashes;
+        };
         buildInputs = allBuildInputs;
         nativeBuildInputs = allNativeBuildInputs;
       };
