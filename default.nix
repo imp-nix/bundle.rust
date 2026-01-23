@@ -15,8 +15,8 @@
       lib ? pkgs.lib,
       inputs,
       rootSrc,
+      config,
       buildDeps ? { },
-      config ? { },
       ...
     }:
     let
@@ -39,7 +39,7 @@
       depsValues = builtins.attrValues buildDeps;
 
       package = rustPlatform.buildRustPackage {
-        pname = cargoToml.package.name or (baseNameOf rootSrc);
+        pname = if config.pname != null then config.pname else cargoToml.package.name;
         version = cargoToml.workspace.package.version or cargoToml.package.version;
         src = rootSrc;
         cargoLock = {
@@ -48,7 +48,7 @@
         };
         buildInputs = cargoConfigDeps.buildInputs ++ lib.concatMap (d: d.buildInputs or [ ]) depsValues;
         nativeBuildInputs = cargoConfigDeps.nativeBuildInputs ++ lib.concatMap (d: d.nativeBuildInputs or [ ]) depsValues;
-        doCheck = config.build.doCheck or false;
+        doCheck = config.build.doCheck;
       };
     in
     {
@@ -59,7 +59,7 @@
         packages =
           [ rustToolchain pkgs.rust-analyzer pkgs.cargo-watch pkgs.cargo-edit ]
           ++ cargoConfigDeps.nativeBuildInputs
-          ++ (config.devShell.extraPackages or [ ]);
+          ++ config.devShell.extraPackages;
       };
 
       __outputs.perSystem.formatter = {
