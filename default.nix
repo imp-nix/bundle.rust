@@ -52,6 +52,10 @@
       };
     in
     {
+      __outputs.perSystem.buildDeps.rust = {
+        inherit rustToolchain rustPlatform rustPkgs;
+      };
+
       __outputs.perSystem.packages.rust = package;
       __outputs.perSystem.checks.rust = package;
 
