@@ -44,7 +44,9 @@
         src = rootSrc;
         cargoLock = {
           lockFile = rootSrc + "/Cargo.lock";
-          outputHashes = lib.foldl' (a: d: a // (d.cargoOutputHashes or { })) { } depsValues;
+          outputHashes =
+            config.build.cargoOutputHashes
+            // lib.foldl' (a: d: a // (d.cargoOutputHashes or { })) { } depsValues;
         };
         buildInputs = cargoConfigDeps.buildInputs ++ lib.concatMap (d: d.buildInputs or [ ]) depsValues;
         nativeBuildInputs = cargoConfigDeps.nativeBuildInputs ++ lib.concatMap (d: d.nativeBuildInputs or [ ]) depsValues;
