@@ -1,7 +1,7 @@
 /**
   Rust bundle: package, devShell, and formatter.
 
-  Uses rust-toolchain.toml if present, otherwise config.nightlyDate.
+  Uses rust-toolchain.toml if present, otherwise config.nightlyDate + config.targets.
   Consumes buildDeps from other bundles. Auto-detects linker deps from .cargo/config.toml.
 */
 {
@@ -25,10 +25,14 @@
       toolchainFile = rootSrc + "/rust-toolchain.toml";
 
       rustToolchain =
-        if builtins.pathExists toolchainFile then
-          rustPkgs.rust-bin.fromRustupToolchainFile toolchainFile
-        else
-          rustPkgs.rust-bin.nightly.${config.nightlyDate}.default;
+        let
+          base =
+            if builtins.pathExists toolchainFile then
+              rustPkgs.rust-bin.fromRustupToolchainFile toolchainFile
+            else
+              rustPkgs.rust-bin.nightly.${config.nightlyDate}.default;
+        in
+        if config.targets == [ ] then base else base.override { targets = config.targets; };
 
       rustPlatform = pkgs.makeRustPlatform {
         cargo = rustToolchain;
