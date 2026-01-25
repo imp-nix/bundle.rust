@@ -12,6 +12,7 @@ description: General rust cleanup process with focus on comments vs rustdoc. Run
 - remove implementation-specific qualifiers and trailing parenthesized text
 - remove comments used for section markers
 - do NOT outright remove docstrings, especially from pubs
+- MUST keep docstrings thorough and technical
 
 2. briefly rework any inelegant or verbose code
 
