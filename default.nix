@@ -44,25 +44,28 @@
 
       hasPostInstall = config.build.postInstall != "";
 
-      package = rustPlatform.buildRustPackage {
-        pname = if config.pname != null then config.pname else cargoToml.package.name;
-        version = cargoToml.workspace.package.version or cargoToml.package.version;
-        src = rootSrc;
-        cargoLock = {
-          lockFile = rootSrc + "/Cargo.lock";
-          outputHashes =
-            config.build.cargoOutputHashes
-            // lib.foldl' (a: d: a // (d.cargoOutputHashes or { })) { } depsValues;
-        };
-        buildInputs = cargoConfigDeps.buildInputs ++ lib.concatMap (d: d.buildInputs or [ ]) depsValues;
-        nativeBuildInputs =
-          cargoConfigDeps.nativeBuildInputs
-          ++ lib.optional hasPostInstall pkgs.makeWrapper
-          ++ lib.concatMap (d: d.nativeBuildInputs or [ ]) depsValues;
-        doCheck = config.build.doCheck;
-      } // lib.optionalAttrs hasPostInstall {
-        inherit (config.build) postInstall;
-      };
+      package = rustPlatform.buildRustPackage (
+        {
+          pname = if config.pname != null then config.pname else cargoToml.package.name;
+          version = cargoToml.workspace.package.version or cargoToml.package.version;
+          src = rootSrc;
+          cargoLock = {
+            lockFile = rootSrc + "/Cargo.lock";
+            outputHashes =
+              config.build.cargoOutputHashes
+              // lib.foldl' (a: d: a // (d.cargoOutputHashes or { })) { } depsValues;
+          };
+          buildInputs = cargoConfigDeps.buildInputs ++ lib.concatMap (d: d.buildInputs or [ ]) depsValues;
+          nativeBuildInputs =
+            cargoConfigDeps.nativeBuildInputs
+            ++ lib.optional hasPostInstall pkgs.makeWrapper
+            ++ lib.concatMap (d: d.nativeBuildInputs or [ ]) depsValues;
+          doCheck = config.build.doCheck;
+        }
+        // lib.optionalAttrs hasPostInstall {
+          inherit (config.build) postInstall;
+        }
+      );
     in
     {
       __outputs.perSystem.buildDeps.rust = {
