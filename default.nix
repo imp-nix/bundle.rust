@@ -42,6 +42,8 @@
       cargoConfigDeps = import ./cargo-config.nix { inherit pkgs rootSrc; };
       depsValues = builtins.attrValues buildDeps;
 
+      hasPostInstall = config.build.postInstall != "";
+
       package = rustPlatform.buildRustPackage {
         pname = if config.pname != null then config.pname else cargoToml.package.name;
         version = cargoToml.workspace.package.version or cargoToml.package.version;
@@ -53,8 +55,13 @@
             // lib.foldl' (a: d: a // (d.cargoOutputHashes or { })) { } depsValues;
         };
         buildInputs = cargoConfigDeps.buildInputs ++ lib.concatMap (d: d.buildInputs or [ ]) depsValues;
-        nativeBuildInputs = cargoConfigDeps.nativeBuildInputs ++ lib.concatMap (d: d.nativeBuildInputs or [ ]) depsValues;
+        nativeBuildInputs =
+          cargoConfigDeps.nativeBuildInputs
+          ++ lib.optional hasPostInstall pkgs.makeWrapper
+          ++ lib.concatMap (d: d.nativeBuildInputs or [ ]) depsValues;
         doCheck = config.build.doCheck;
+      } // lib.optionalAttrs hasPostInstall {
+        inherit (config.build) postInstall;
       };
     in
     {
