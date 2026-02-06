@@ -123,7 +123,13 @@
 
       __outputs.perSystem.devShells.rust = pkgs.mkShell {
         packages =
-          [ rustToolchain pkgs.rust-analyzer pkgs.cargo-watch pkgs.cargo-edit ]
+          [
+            rustToolchain
+            pkgs.rust-analyzer
+            pkgs.cargo-watch
+            pkgs.cargo-edit
+            pkgs.wasm-bindgen-cli_0_2_108
+          ]
           ++ cargoConfigDeps.nativeBuildInputs
           ++ config.devShell.extraPackages;
       };

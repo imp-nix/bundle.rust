@@ -16,7 +16,7 @@ Nix bundle for building Rust packages, devShells, and formatting.
 |--------|-------------|
 | `packages.<name>` | Built Rust package(s) |
 | `checks.<name>` | Same as packages (build verification) |
-| `devShells.rust` | Shell with toolchain, rust-analyzer, cargo-watch, cargo-edit |
+| `devShells.rust` | Shell with toolchain, rust-analyzer, cargo-watch, cargo-edit, wasm-bindgen-cli |
 | `buildDeps.rust` | `{ rustToolchain, rustPlatform, rustPkgs }` for other bundles |
 | `formatter` | Merges rustfmt into treefmt config |
 
